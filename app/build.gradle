@@ -1,14 +1,22 @@
 apply plugin: 'com.android.application'
-apply plugin: 'com.jakewharton.hugo'
 //apply plugin: 'com.antfortune.freeline'
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion '26.0.2'
+    namespace 'com.cpxiao'
+    compileSdk 35
+
+    buildFeatures {
+        buildConfig true
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
     defaultConfig {
         applicationId "com.cpxiao.idleballz"
-        minSdkVersion 14
-        targetSdkVersion 25
+        minSdk 14
+        targetSdk 35
         versionCode 206
         versionName "2.0.6"
         flavorDimensions "channel"
@@ -74,29 +82,30 @@ android {
 }
 
 dependencies {
-    compile project(':__AndroidUtils:library')
-    compile 'com.android.support:appcompat-v7:25.3.1'
+    implementation project(':androidutils')
+    implementation 'com.android.support:appcompat-v7:25.3.1'
     /**
      * Ads Start
      */
     //友盟统计
-    compile 'com.umeng.analytics:analytics:6.1.2'
-//    compile 'com.umeng.analytics:analytics:latest.integration'
+    implementation 'com.umeng.analytics:analytics:6.1.2'
+//    implementation 'com.umeng.analytics:analytics:latest.integration'
     //Facebook广告
-//    compile files('libs/AudienceNetwork_v4.7.jar')
-//    compile 'com.facebook.android:audience-network-sdk:4.+'
-    compile 'com.facebook.android:audience-network-sdk:4.25.0'
+//    implementation files('libs/AudienceNetwork_v4.7.jar')
+//    implementation 'com.facebook.android:audience-network-sdk:4.+'
+    implementation('com.facebook.android:audience-network-sdk:4.25.0') {
+        exclude group: 'com.google.android.exoplayer', module: 'exoplayer'
+    }
     //AdMob广告
-//    compile 'com.google.firebase:firebase-ads:9.4.0'
-    compile 'com.google.firebase:firebase-ads:11.0.0'
+//    implementation 'com.google.firebase:firebase-ads:9.4.0'
+    implementation 'com.google.firebase:firebase-ads:11.0.0'
     //ZAds SDK
-//    compile 'com.github.bumptech.glide:glide:3.7.0'//要放在前面几个库的后面
-    compile 'com.github.bumptech.glide:glide:4.0.0-RC1'
+//    implementation 'com.github.bumptech.glide:glide:3.7.0'//要放在前面几个库的后面
+    implementation 'com.github.bumptech.glide:glide:4.0.0-RC1'
     /**
      * Ads End
      */
 
-    compile 'com.android.support:recyclerview-v7:25.3.1'
+    implementation 'com.android.support:recyclerview-v7:25.3.1'
 
 }
-apply plugin: 'com.google.gms.google-services'
