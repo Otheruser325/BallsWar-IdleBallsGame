@@ -1,9 +1,18 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
 include ':app'
-
-include ':__AndroidUtils'
-project(':__AndroidUtils').projectDir = new File('../../__AndroidUtils/')
-include ':__AndroidUtils:library'
-
-include ':__MiniGameLib'
-project(':__MiniGameLib').projectDir = new File('../../__MiniGameLib/')
-//include ':__MiniGameLib:app'
+include ':androidutils'
