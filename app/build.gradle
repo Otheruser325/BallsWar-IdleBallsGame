@@ -2,11 +2,11 @@ apply plugin: 'com.android.application'
 //apply plugin: 'com.antfortune.freeline'
 
 android {
-    namespace 'com.cpxiao'
-    compileSdk 35
+    namespace = 'com.cpxiao'
+    compileSdk = 35
 
     buildFeatures {
-        buildConfig true
+        buildConfig = true
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
@@ -15,8 +15,8 @@ android {
 
     defaultConfig {
         applicationId "com.cpxiao.idleballz"
-        minSdk 14
-        targetSdk 35
+        minSdk = 14
+        targetSdk = 35
         versionCode 206
         versionName "2.0.6"
         flavorDimensions "channel"
@@ -25,7 +25,7 @@ android {
     buildTypes {
         release {
             minifyEnabled true  //混淆
-            shrinkResources true // 移除无用的resource文件
+            shrinkResources = true // 移除无用的resource文件
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

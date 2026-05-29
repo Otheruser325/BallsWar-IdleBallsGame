@@ -3,8 +3,8 @@ plugins {
 }
 
 android {
-    namespace 'com.cpxiao.androidutils.library'
-    compileSdk 35
+    namespace = 'com.cpxiao.androidutils.library'
+    compileSdk = 35
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
@@ -12,6 +12,6 @@ android {
     }
 
     defaultConfig {
-        minSdk 14
+        minSdk = 14
     }
 }
