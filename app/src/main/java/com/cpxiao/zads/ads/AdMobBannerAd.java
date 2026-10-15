@@ -13,10 +13,11 @@ import com.cpxiao.zads.ads.core.Advertisement;
 import com.cpxiao.zads.ads.core.BaseZAd;
 import com.cpxiao.zads.core.AdConfigBean;
 import com.cpxiao.zads.core.ZAdSize;
+import com.cpxiao.zads.utils.AdRequestFactory;
 import com.google.android.gms.ads.AdListener;
-import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.LoadAdError;
 
 import java.util.Queue;
 
@@ -40,11 +41,8 @@ public class AdMobBannerAd extends BaseZAd {
     public void loadAd(final Context c, final Queue<Advertisement> next) {
         //参数校验
         if (TextUtils.isEmpty(mPlaceId)) {
-            if (DEBUG) {
-                String msg = "loadAd: param error!";
-                Log.d(TAG, msg);
-                throw new IllegalArgumentException(msg);
-            }
+            Log.e(TAG, "loadAd: param error!");
+            onLoadZAdFail(get(), "empty place id", next);
             return;
         }
 
@@ -69,21 +67,13 @@ public class AdMobBannerAd extends BaseZAd {
             }
 
             @Override
-            public void onAdFailedToLoad(int i) {
-                super.onAdFailedToLoad(i);
-                String msg = "ErrorCode = " + i;
+            public void onAdFailedToLoad(LoadAdError loadAdError) {
+                super.onAdFailedToLoad(loadAdError);
+                String msg = "ErrorCode = " + loadAdError.getCode();
                 if (DEBUG) {
                     Log.d(TAG, "onAdFailedToLoad: mPlaceId = " + mPlaceId + ", msg = " + msg);
                 }
                 onLoadZAdFail(get(), msg, next);
-            }
-
-            @Override
-            public void onAdLeftApplication() {
-                super.onAdLeftApplication();
-                if (DEBUG) {
-                    Log.d(TAG, "onAdLeftApplication: ");
-                }
             }
 
             @Override
@@ -107,17 +97,7 @@ public class AdMobBannerAd extends BaseZAd {
                 onLoadZAdSuccess(get());
             }
         });
-        AdRequest adRequest;
-        if (DEBUG) {
-            adRequest = new AdRequest.Builder()
-                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)// All emulators
-                    .addTestDevice(TEST_DEVICE)
-                    .build();
-        } else {
-            adRequest = new AdRequest.Builder()
-                    .build();
-        }
-        mAdManager.loadAd(adRequest);
+        mAdManager.loadAd(AdRequestFactory.create(c));
     }
 
 
@@ -166,9 +146,7 @@ public class AdMobBannerAd extends BaseZAd {
         } else if (size == ZAdSize.BANNER_300X250) {
             return AdSize.MEDIUM_RECTANGLE;
         } else {
-            if (DEBUG) {
-                throw new IllegalArgumentException("No Size found in " + TAG);
-            }
+            Log.e(TAG, "No Size found in " + TAG + ", size = " + size);
             return AdSize.SMART_BANNER;
         }
     }

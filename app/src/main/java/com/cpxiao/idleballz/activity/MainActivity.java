@@ -2,6 +2,7 @@ package com.cpxiao.idleballz.activity;
 
 import android.os.Bundle;
 
+import com.cpxiao.BuildConfig;
 import com.cpxiao.gamelib.activity.BaseVideoAdsActivity;
 import com.cpxiao.gamelib.fragment.BaseFragment;
 import com.cpxiao.idleballz.fragment.GameFragment;
@@ -24,8 +25,8 @@ public class MainActivity extends BaseVideoAdsActivity {
     }
 
     private void loadAds() {
-        initAdMobAds100("ca-app-pub-4157365005379790/2632993970");
-        initFbAds90("2090519740961758_2090523687628030");
+        initAdMobAds100(BuildConfig.ADMOB_BANNER_UNIT_ID);
+        initFbAds90(BuildConfig.FB_BANNER_PLACE_ID);
         loadZAds(ZAdPosition.POSITION_MAIN);
     }
 

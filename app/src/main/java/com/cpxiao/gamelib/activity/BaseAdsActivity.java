@@ -1,6 +1,5 @@
 package com.cpxiao.gamelib.activity;
 
-import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -10,15 +9,14 @@ import android.widget.LinearLayout;
 import com.cpxiao.AppConfig;
 import com.cpxiao.R;
 import com.cpxiao.gamelib.activity.core.BaseAppActivity;
+import com.cpxiao.zads.utils.AdRequestFactory;
 import com.facebook.ads.Ad;
 import com.facebook.ads.AdError;
 import com.facebook.ads.AdListener;
 import com.facebook.ads.AdSettings;
 import com.facebook.ads.AdSize;
 import com.facebook.ads.AdView;
-import com.google.android.gms.ads.AdRequest;
-import com.umeng.analytics.MobclickAgent;
-
+import com.google.android.gms.ads.LoadAdError;
 
 /**
  * @author cpxiao on 2017/3/1.
@@ -32,24 +30,7 @@ public abstract class BaseAdsActivity extends BaseAppActivity {
 
     protected com.google.android.gms.ads.AdView mAdMobAdView;
     protected AdView mFbAdView;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        MobclickAgent.onResume(this);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        MobclickAgent.onPause(this);
-    }
-
+    private AdListener mFbAdViewListener;
 
     @Override
     protected void onDestroy() {
@@ -63,7 +44,6 @@ public abstract class BaseAdsActivity extends BaseAppActivity {
         }
         super.onDestroy();
     }
-
 
     protected void initAdMobAds50(String placementId) {
         initAdMobAds(placementId, com.google.android.gms.ads.AdSize.SMART_BANNER);
@@ -83,9 +63,7 @@ public abstract class BaseAdsActivity extends BaseAppActivity {
         }
 
         if (TextUtils.isEmpty(unitId)) {
-            if (DEBUG) {
-                throw new IllegalArgumentException("initAdMobAds: unitId is empty!");
-            }
+            Log.e(TAG, "initAdMobAds: unitId is empty!");
             return;
         }
         mAdMobAdView = new com.google.android.gms.ads.AdView(this);
@@ -102,20 +80,11 @@ public abstract class BaseAdsActivity extends BaseAppActivity {
             }
 
             @Override
-            public void onAdFailedToLoad(int i) {
-                super.onAdFailedToLoad(i);
+            public void onAdFailedToLoad(LoadAdError loadAdError) {
+                super.onAdFailedToLoad(loadAdError);
                 if (DEBUG) {
-                    Log.d(TAG, "AdMob -> " + "onAdFailedToLoad: i = " + i);
+                    Log.d(TAG, "AdMob -> " + "onAdFailedToLoad: i = " + loadAdError.getCode());
                 }
-            }
-
-            @Override
-            public void onAdLeftApplication() {
-                super.onAdLeftApplication();
-                if (DEBUG) {
-                    Log.d(TAG, "AdMob -> " + "onAdLeftApplication: ");
-                }
-
             }
 
             @Override
@@ -136,20 +105,10 @@ public abstract class BaseAdsActivity extends BaseAppActivity {
                 addToLayout(mAdMobAdView);
             }
         });
-        AdRequest adRequest;
-        if (DEBUG) {
-            adRequest = new AdRequest.Builder()
-                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)// All emulators
-                    .addTestDevice(TEST_DEVICE_ADMOB)
-                    .build();
-        } else {
-            adRequest = new AdRequest.Builder()
-                    .build();
-        }
         if (DEBUG) {
             Log.d(TAG, "initAdMobAds: mAdMobAdView.loadAd(adRequest);");
         }
-        mAdMobAdView.loadAd(adRequest);
+        mAdMobAdView.loadAd(AdRequestFactory.create(this));
 
     }
 
@@ -171,15 +130,13 @@ public abstract class BaseAdsActivity extends BaseAppActivity {
         }
 
         if (TextUtils.isEmpty(placeId)) {
-            if (DEBUG) {
-                throw new IllegalArgumentException("initFbAds: placeId is empty!");
-            }
+            Log.e(TAG, "initFbAds: placeId is empty!");
             return;
         }
 
         mFbAdView = new AdView(this, placeId, adSize);
 
-        mFbAdView.setAdListener(new AdListener() {
+        mFbAdViewListener = new AdListener() {
 
             @Override
             public void onError(Ad ad, AdError error) {
@@ -210,7 +167,7 @@ public abstract class BaseAdsActivity extends BaseAppActivity {
                 }
             }
 
-        });
+        };
         if (DEBUG) {
             AdSettings.addTestDevice(TEST_DEVICE_FB);
 
@@ -223,10 +180,11 @@ public abstract class BaseAdsActivity extends BaseAppActivity {
         if (DEBUG) {
             Log.d(TAG, "initFbAds: mFbAdView.loadAd();");
         }
-        mFbAdView.loadAd();
+        mFbAdView.loadAd(mFbAdView.buildLoadAdConfig()
+                .withAdListener(mFbAdViewListener)
+                .build());
 
     }
-
 
     private void addToLayout(View view) {
         if (DEBUG) {
@@ -238,6 +196,10 @@ public abstract class BaseAdsActivity extends BaseAppActivity {
         removeFromParent(view);
 
         LinearLayout layout = (LinearLayout) findViewById(R.id.layout_ads);
+        if (layout == null) {
+            Log.e(TAG, "addToLayout: R.id.layout_ads not found!");
+            return;
+        }
         layout.removeAllViews();
         layout.addView(view);
     }

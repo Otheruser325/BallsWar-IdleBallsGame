@@ -66,6 +66,9 @@ freeline_project_description.json
 
 .idea
 *.apk
-gradlew*
 output.json
 google-services.json
+
+# Wrapper scripts are versioned on purpose: they are the pinned entry point to
+# the build. The wrapper JAR checksum is verified against
+# https://services.gradle.org/distributions/gradle-<version>-wrapper.jar.sha256

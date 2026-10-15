@@ -1,6 +1,5 @@
 package com.cpxiao.gamelib.activity;
 
-import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.LinearLayout;
@@ -8,15 +7,15 @@ import android.widget.LinearLayout;
 import com.cpxiao.AppConfig;
 import com.cpxiao.R;
 import com.cpxiao.zads.ZAdManager;
+import com.cpxiao.zads.utils.AdRequestFactory;
 import com.facebook.ads.Ad;
 import com.facebook.ads.AdError;
 import com.facebook.ads.AdSettings;
 import com.facebook.ads.InterstitialAdListener;
-import com.google.android.gms.ads.AdListener;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.InterstitialAd;
-import com.umeng.analytics.MobclickAgent;
-
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 
 /**
  * @author cpxiao on 2017/3/1.
@@ -31,24 +30,9 @@ public abstract class BaseZAdsActivity extends BaseAdsActivity {
     protected final String TEST_DEVICE_ADMOB = AppConfig.TEST_DEVICE_ADMOB;
 
     private InterstitialAd mAdMobInterstitialAd;
+    private String mAdMobInterstitialAdUnitId;
     private com.facebook.ads.InterstitialAd mFbInterstitialAd;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        MobclickAgent.onResume(this);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        MobclickAgent.onPause(this);
-    }
+    private InterstitialAdListener mFbInterstitialAdListener;
 
     @Override
     protected void onDestroy() {
@@ -71,58 +55,10 @@ public abstract class BaseZAdsActivity extends BaseAdsActivity {
      */
     protected void initAdMobInterstitialAd(String unitId) {
         if (TextUtils.isEmpty(unitId)) {
-            if (DEBUG) {
-                throw new IllegalArgumentException("param error!");
-            }
+            Log.e(TAG, "initAdMobInterstitialAd: unitId is empty!");
             return;
         }
-        mAdMobInterstitialAd = new InterstitialAd(this);
-        mAdMobInterstitialAd.setAdUnitId(unitId);
-
-        mAdMobInterstitialAd.setAdListener(new AdListener() {
-            @Override
-            public void onAdLoaded() {
-                // Code to be executed when an ad finishes loading.
-                if (DEBUG) {
-                    Log.d(TAG, "onAdLoaded: ");
-                    showAdMobInterstitialAd();
-                }
-            }
-
-            @Override
-            public void onAdFailedToLoad(int errorCode) {
-                // Code to be executed when an ad request fails.
-                if (DEBUG) {
-                    Log.d(TAG, "onAdFailedToLoad: ");
-                }
-            }
-
-            @Override
-            public void onAdOpened() {
-                // Code to be executed when the ad is displayed.
-                if (DEBUG) {
-                    Log.d(TAG, "onAdOpened: ");
-                }
-            }
-
-            @Override
-            public void onAdLeftApplication() {
-                // Code to be executed when the user has left the app.
-                if (DEBUG) {
-                    Log.d(TAG, "onAdLeftApplication: ");
-                }
-            }
-
-            @Override
-            public void onAdClosed() {
-                // Code to be executed when when the interstitial ad is closed.
-                if (DEBUG) {
-                    Log.d(TAG, "onAdClosed: ");
-                }
-                loadAdMobInterstitialAd();
-            }
-        });
-
+        mAdMobInterstitialAdUnitId = unitId;
         loadAdMobInterstitialAd();
     }
 
@@ -130,40 +66,60 @@ public abstract class BaseZAdsActivity extends BaseAdsActivity {
         if (DEBUG) {
             Log.d(TAG, "loadAdMobInterstitialAd: ");
         }
-        if (mAdMobInterstitialAd != null && !mAdMobInterstitialAd.isLoading()) {
-            AdRequest adRequest;
-            if (DEBUG) {
-                adRequest = new AdRequest.Builder()
-                        .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)// All emulators
-                        .addTestDevice(TEST_DEVICE_ADMOB)
-                        .build();
-            } else {
-                adRequest = new AdRequest.Builder()
-                        .build();
-            }
-            mAdMobInterstitialAd.loadAd(adRequest);
+        if (mAdMobInterstitialAd != null || mAdMobInterstitialAdUnitId == null) {
+            return;
         }
+        InterstitialAd.load(this, mAdMobInterstitialAdUnitId, AdRequestFactory.create(this),
+                new InterstitialAdLoadCallback() {
+                    @Override
+                    public void onAdLoaded(InterstitialAd ad) {
+                        mAdMobInterstitialAd = ad;
+                        ad.setFullScreenContentCallback(new FullScreenContentCallback() {
+                            @Override
+                            public void onAdDismissedFullScreenContent() {
+                                mAdMobInterstitialAd = null;
+                                loadAdMobInterstitialAd();
+                            }
+
+                            @Override
+                            public void onAdFailedToShowFullScreenContent(
+                                    com.google.android.gms.ads.AdError adError) {
+                                mAdMobInterstitialAd = null;
+                                loadAdMobInterstitialAd();
+                            }
+                        });
+                        if (DEBUG) {
+                            Log.d(TAG, "onAdLoaded: ");
+                        }
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(LoadAdError loadAdError) {
+                        mAdMobInterstitialAd = null;
+                        if (DEBUG) {
+                            Log.d(TAG, "onAdFailedToLoad: " + loadAdError.getCode());
+                        }
+                    }
+                });
     }
 
     protected void showAdMobInterstitialAd() {
         if (mAdMobInterstitialAd != null) {
-            if (mAdMobInterstitialAd.isLoaded()) {
-                mAdMobInterstitialAd.show();
-            } else {
-                loadAdMobInterstitialAd();
-            }
+            mAdMobInterstitialAd.show(this);
+        } else {
+            loadAdMobInterstitialAd();
         }
     }
 
     protected void initFbInterstitialAd(String placeId) {
         if (TextUtils.isEmpty(placeId)) {
-            if (DEBUG) {
-                throw new IllegalArgumentException("param error!");
-            }
+            Log.e(TAG, "initFbInterstitialAd: placeId is empty!");
             return;
         }
         mFbInterstitialAd = new com.facebook.ads.InterstitialAd(this, placeId);
-        mFbInterstitialAd.setAdListener(new InterstitialAdListener() {
+        // FB 6.x removed InterstitialAd#setAdListener; the listener is attached to the
+        // load config and consumed by loadFbInterstitialAd below.
+        mFbInterstitialAdListener = new InterstitialAdListener() {
             @Override
             public void onInterstitialDisplayed(Ad ad) {
                 if (DEBUG) {
@@ -189,8 +145,8 @@ public abstract class BaseZAdsActivity extends BaseAdsActivity {
             public void onAdLoaded(Ad ad) {
                 if (DEBUG) {
                     Log.d(TAG, "onAdLoaded: ");
-                    showFbInterstitialAd();
                 }
+                showFbInterstitialAd();
             }
 
             @Override
@@ -206,7 +162,7 @@ public abstract class BaseZAdsActivity extends BaseAdsActivity {
                     Log.d(TAG, "onLoggingImpression: ");
                 }
             }
-        });
+        };
 
         loadFbInterstitialAd();
     }
@@ -215,12 +171,15 @@ public abstract class BaseZAdsActivity extends BaseAdsActivity {
         if (DEBUG) {
             Log.d(TAG, "loadFbInterstitialAd: ");
         }
-        if (mFbInterstitialAd != null) {
-            if (DEBUG) {
-                AdSettings.addTestDevice(TEST_DEVICE_FB);
-            }
-            mFbInterstitialAd.loadAd();
+        if (mFbInterstitialAd == null) {
+            return;
         }
+        if (DEBUG) {
+            AdSettings.addTestDevice(TEST_DEVICE_FB);
+        }
+        mFbInterstitialAd.loadAd(mFbInterstitialAd.buildLoadAdConfig()
+                .withAdListener(mFbInterstitialAdListener)
+                .build());
     }
 
     protected void showFbInterstitialAd() {
@@ -232,6 +191,5 @@ public abstract class BaseZAdsActivity extends BaseAdsActivity {
             }
         }
     }
-
 
 }

@@ -2,8 +2,8 @@ package com.cpxiao.idleballz.fragment;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -14,6 +14,7 @@ import com.cpxiao.R;
 import com.cpxiao.androidutils.library.utils.PreferencesUtils;
 import com.cpxiao.androidutils.library.utils.RateAppUtils;
 import com.cpxiao.androidutils.library.utils.ShareAppUtils;
+import com.cpxiao.gamelib.activity.BaseVideoAdsActivity;
 import com.cpxiao.gamelib.fragment.BaseVideoAdsFragment;
 import com.cpxiao.idleballz.adapter.BallsRecyclerViewAdapter;
 import com.cpxiao.idleballz.adapter.BoostersRecyclerViewAdapter;
@@ -131,26 +132,34 @@ public class GameFragment extends BaseVideoAdsFragment implements View.OnClickLi
         mBoostersRecyclerViewAdapter = new BoostersRecyclerViewAdapter(getContext(), mBoosterDataList);
         mBoostersRecyclerViewAdapter.setOnBoostersItemClicked(new OnBoostersItemClicked() {
             @Override
-            public void onItemClicked(int index) {
+            public void onItemClicked(final int index) {
                 if (DEBUG) {
                     Log.d(TAG, "onItemClicked: ....");
                 }
-                if (isRewardedVideoAdLoaded()) {
-                    showVideoAds();
-                    BoosterItemData item = mBoosterDataList.get(index);
-
-                    if (TextUtils.equals(item.title, getString(R.string.boosters_level_up_1))) {
-                        levelUp(context);
-                    } else if (TextUtils.equals(item.title, getString(R.string.boosters_tap_x10))) {
-                        tapX10(context);
-                    } else if (TextUtils.equals(item.title, getString(R.string.boosters_power_x2))) {
-                        powerX2(context);
-                    }
-                } else {
+                if (!isRewardedVideoAdLoaded()) {
                     Toast.makeText(context, R.string.video_not_ready_msg, Toast.LENGTH_SHORT).show();
                     loadRewardedVideoAd();
+                    return;
                 }
-
+                // The booster is granted from the completion callback only. Granting it
+                // here (as before) paid out even when the video failed to load or the
+                // user closed it immediately.
+                showVideoAds(new BaseVideoAdsActivity.OnRewardedVideoCompletedListener() {
+                    @Override
+                    public void onRewardedVideoCompleted(boolean rewardEarned) {
+                        if (!rewardEarned) {
+                            return;
+                        }
+                        BoosterItemData item = mBoosterDataList.get(index);
+                        if (TextUtils.equals(item.title, getString(R.string.boosters_level_up_1))) {
+                            levelUp(context);
+                        } else if (TextUtils.equals(item.title, getString(R.string.boosters_tap_x10))) {
+                            tapX10(context);
+                        } else if (TextUtils.equals(item.title, getString(R.string.boosters_power_x2))) {
+                            powerX2(context);
+                        }
+                    }
+                });
             }
         });
 

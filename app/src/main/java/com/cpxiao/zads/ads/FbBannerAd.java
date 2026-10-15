@@ -42,11 +42,8 @@ public class FbBannerAd extends BaseZAd {
     public void loadAd(final Context c, final Queue<Advertisement> next) {
         //参数校验
         if (TextUtils.isEmpty(mPlaceId)) {
-            if (DEBUG) {
-                String msg = "loadAd: param error!";
-                Log.d(TAG, msg);
-                throw new IllegalArgumentException(msg);
-            }
+            Log.e(TAG, "loadAd: param error!");
+            onLoadZAdFail(get(), "empty place id", next);
             return;
         }
 
@@ -58,42 +55,46 @@ public class FbBannerAd extends BaseZAd {
             mAdManager = null;
         }
         mAdManager = new AdView(c, mPlaceId, getAdSize(mAdSize));
-        mAdManager.setAdListener(new AdListener() {
-            @Override
-            public void onError(Ad ad, AdError adError) {
-                String msg = "getErrorCode = " + adError.getErrorCode() + ", getErrorMessage = " + adError.getErrorMessage();
-                if (DEBUG) {
-                    Log.d(TAG, "onError: mPlaceId = " + mPlaceId + ", msg = " + msg);
-                }
-                onLoadZAdFail(get(), msg, next);
-            }
+        // FB 6.x removed AdView#setAdListener; the listener is supplied through the
+        // load config builder instead.
+        mAdManager.loadAd(mAdManager.buildLoadAdConfig()
+                .withAdListener(new AdListener() {
+                    @Override
+                    public void onError(Ad ad, AdError adError) {
+                        String msg = "getErrorCode = " + adError.getErrorCode() + ", getErrorMessage = " + adError.getErrorMessage();
+                        if (DEBUG) {
+                            Log.d(TAG, "onError: mPlaceId = " + mPlaceId + ", msg = " + msg);
+                        }
+                        onLoadZAdFail(get(), msg, next);
+                    }
 
-            @Override
-            public void onAdLoaded(Ad ad) {
-                if (DEBUG) {
-                    Log.d(TAG, "onAdLoaded: mPlaceId = " + mPlaceId);
-                }
-                mLastAdView = generateView(c, mAdManager, mAdSize);
-                onLoadZAdSuccess(get());
-            }
+                    @Override
+                    public void onAdLoaded(Ad ad) {
+                        if (DEBUG) {
+                            Log.d(TAG, "onAdLoaded: mPlaceId = " + mPlaceId);
+                        }
+                        mLastAdView = generateView(c, mAdManager, mAdSize);
+                        onLoadZAdSuccess(get());
+                    }
 
-            @Override
-            public void onAdClicked(Ad ad) {
-                if (DEBUG) {
-                    Log.d(TAG, "onAdClicked: ");
-                }
-                if (mZAdListener != null) {
-                    mZAdListener.onAdClick(get());
-                }
-            }
+                    @Override
+                    public void onAdClicked(Ad ad) {
+                        if (DEBUG) {
+                            Log.d(TAG, "onAdClicked: ");
+                        }
+                        if (mZAdListener != null) {
+                            mZAdListener.onAdClick(get());
+                        }
+                    }
 
-            @Override
-            public void onLoggingImpression(Ad ad) {
-                if (DEBUG) {
-                    Log.d(TAG, "onLoggingImpression: ");
-                }
-            }
-        });
+                    @Override
+                    public void onLoggingImpression(Ad ad) {
+                        if (DEBUG) {
+                            Log.d(TAG, "onLoggingImpression: ");
+                        }
+                    }
+                })
+                .build());
         if (DEBUG) {
             //            AdSettings.addTestDevice("e6298923190b4e7e7119e0f14c44f097");
 
@@ -102,7 +103,6 @@ public class FbBannerAd extends BaseZAd {
             testDevices.add(TEST_DEVICE);
             AdSettings.addTestDevices(testDevices);
         }
-        mAdManager.loadAd();
     }
 
 
@@ -144,9 +144,7 @@ public class FbBannerAd extends BaseZAd {
         } else if (size == ZAdSize.BANNER_300X250) {
             return AdSize.RECTANGLE_HEIGHT_250;
         } else {
-            if (DEBUG) {
-                throw new IllegalArgumentException("No Size found in " + TAG);
-            }
+            Log.e(TAG, "No Size found in " + TAG + ", size = " + size);
             return AdSize.BANNER_HEIGHT_50;
         }
     }
