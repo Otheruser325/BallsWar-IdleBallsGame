@@ -1,7 +1,7 @@
 package com.cpxiao.idleballz.mode.extra;
 
 import android.content.Context;
-import android.support.v4.content.ContextCompat;
+import androidx.core.content.ContextCompat;
 import android.util.Log;
 
 import com.cpxiao.AppConfig;

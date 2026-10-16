@@ -16,6 +16,7 @@ import com.cpxiao.zads.core.ZAdSize;
 import com.cpxiao.zads.views.ZBannerView;
 import com.facebook.ads.AdError;
 import com.facebook.ads.AdSettings;
+import com.facebook.ads.MediaView;
 import com.facebook.ads.NativeAd;
 import com.facebook.ads.NativeAdsManager;
 
@@ -31,6 +32,7 @@ public class FbNativeAd extends BaseZAd {
     private static final String TEST_DEVICE = AppConfig.TEST_DEVICE_FB;
 
     private NativeAdsManager mAdManager;
+    private MediaView mMediaView;
 
     public FbNativeAd(AdConfigBean advertiser) {
         super(advertiser);
@@ -99,7 +101,9 @@ public class FbNativeAd extends BaseZAd {
         if (mLastAdView != null) {
             NativeAd ad = (NativeAd) mLastAdView.getTag(R.id.tag_info);
             if (ad != null) {
-                ad.registerViewForInteraction(mLastAdView);
+                // FB 6.x requires a MediaView; a plain View container is no longer
+                // accepted, so the ad is registered against the view's MediaView child.
+                ad.registerViewForInteraction(mLastAdView, mMediaView);
             }
         }
         return mLastAdView;
@@ -128,8 +132,11 @@ public class FbNativeAd extends BaseZAd {
         }
         if (size == ZAdSize.BANNER_320X50 || size == ZAdSize.BANNER_320X90 || size == ZAdSize.BANNER_320X100) {
             ZBannerView view = new ZBannerView(c, size);
-            view.bindData(c, icon, ad.getAdTitle(), ad.getAdSubtitle());
+            view.bindData(c, icon, ad.getAdHeadline(), ad.getAdLinkDescription());
             view.setTag(R.id.tag_info, ad);
+            // A MediaView is required by registerViewForInteraction in FB 6.x. The
+            // banner layout shows no media, so it is kept detached from the view tree.
+            mMediaView = new MediaView(c);
             return view;
         } else if (size == ZAdSize.BANNER_300X250) {
             if (TextUtils.isEmpty(picture)) {
@@ -138,11 +145,10 @@ public class FbNativeAd extends BaseZAd {
             ImageView view = new ImageView(c);
             Glide.with(c).load(picture).into(view);
             view.setTag(R.id.tag_info, ad);
+            mMediaView = new MediaView(c);
             return view;
         } else {
-            if (DEBUG) {
-                throw new IllegalArgumentException("adSize error! ");
-            }
+            Log.e(TAG, "generateView: adSize error! size = " + size);
             return null;
         }
     }

@@ -12,6 +12,6 @@ android {
     }
 
     defaultConfig {
-        minSdk = 14
+        minSdk = 21
     }
 }

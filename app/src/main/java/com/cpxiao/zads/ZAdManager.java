@@ -1,7 +1,7 @@
 package com.cpxiao.zads;
 
 import android.content.Context;
-import android.support.v4.util.ArrayMap;
+import androidx.collection.ArrayMap;
 import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -90,11 +90,7 @@ public class ZAdManager {
             Log.d(TAG, "destroy: position = " + position);
         }
         if (mLoadedAdViewArrayMap == null) {
-            if (DEBUG) {
-                String msg = "destroy: param error! mLoadedAdViewArrayMap == null";
-                Log.e(TAG, msg);
-                throw new IllegalArgumentException(msg);
-            }
+            Log.e(TAG, "destroy: param error! mLoadedAdViewArrayMap == null");
             return;
         }
         Advertisement advertisement = mLoadedAdViewArrayMap.get(position);
@@ -109,29 +105,17 @@ public class ZAdManager {
 
     public void loadAd(final Context appCxt, final int position, final LinearLayout layout) {
         if (layout == null) {
-            if (DEBUG) {
-                String msg = "loadAd: param error! layout == null";
-                Log.e(TAG, msg);
-                throw new IllegalArgumentException(msg);
-            }
+            Log.e(TAG, "loadAd: param error! layout == null");
             return;
         }
         if (appCxt == null || mAdConfigArrayMap == null) {
-            if (DEBUG) {
-                String msg = "loadAd: param error! 广告未进行初始化配置!";
-                Log.e(TAG, msg);
-                throw new IllegalArgumentException(msg);
-            }
+            Log.e(TAG, "loadAd: param error! 广告未进行初始化配置!");
             return;
         }
 
         List<AdConfigBean> list = mAdConfigArrayMap.get(position);
         if (list == null || list.isEmpty()) {
-            if (DEBUG) {
-                String msg = "loadAd: error! 此广告位的配置信息为空！position = " + position;
-                Log.d(TAG, msg);
-                throw new IllegalArgumentException(msg);
-            }
+            Log.e(TAG, "loadAd: error! 此广告位的配置信息为空！position = " + position);
             return;
         }
         //先排队
@@ -147,6 +131,13 @@ public class ZAdManager {
         }
         //请求第一个,如果失败请求下一个
         final Advertisement advertisement = queue.poll();
+        if (advertisement == null) {
+            // Every configured advertiser was unusable (unknown ad_type or missing
+            // config), so there is nothing to load. Bail out instead of dereferencing
+            // a null advertisement and crashing the host activity.
+            Log.e(TAG, "loadAd: no usable advertiser configured, position = " + position);
+            return;
+        }
         //注意回调的时候要在主线程中，否则有些广告会crash！
         advertisement.setListener(new ZAdListener() {
             @Override
@@ -214,11 +205,7 @@ public class ZAdManager {
 
     private Advertisement getAdvertisement(Context context, AdConfigBean adConfigBean) {
         if (context == null || adConfigBean == null) {
-            if (DEBUG) {
-                String msg = "getAdvertisement: param error!  context == null || adConfigBean == null";
-                Log.d(TAG, msg);
-                throw new IllegalArgumentException(msg);
-            }
+            Log.e(TAG, "getAdvertisement: param error!  context == null || adConfigBean == null");
             return null;
         }
         switch (adConfigBean.adType) {
@@ -235,11 +222,9 @@ public class ZAdManager {
                 return new FbBannerAd(adConfigBean);
             }
             default: {
-                if (DEBUG) {
-                    String msg = "getAdvertisement: ZAdType error!  adConfigBean.adType = " + adConfigBean.adType;
-                    Log.d(TAG, msg);
-                    throw new IllegalArgumentException(msg);
-                }
+                // Returning null here (instead of throwing) lets the caller skip this
+                // entry and fall through to the next advertiser in the queue.
+                Log.e(TAG, "getAdvertisement: ZAdType error!  adConfigBean.adType = " + adConfigBean.adType);
                 return null;
             }
         }

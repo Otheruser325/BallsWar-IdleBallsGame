@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backup / device-transfer policy.
+
+  The game economy (coin balance, game level, per-ball upgrade levels) is stored
+  in plain SharedPreferences with no integrity protection, so it must never be
+  copied off the device by auto-backup or by a device-to-device transfer.
+  Full-data backup is disabled entirely rather than allowlisting individual
+  files, so newly added state is excluded by default instead of being silently
+  exposed.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>

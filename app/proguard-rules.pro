@@ -23,3 +23,22 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# ---------------------------------------------------------------------------
+# Third-party SDK keep rules
+# ---------------------------------------------------------------------------
+
+# Audience Network 6.x ships annotations from com.facebook.infer.annotation
+# (Nullsafe) that are not on the compile/runtime classpath. R8 fails the release
+# build on the missing reference, so the warning is suppressed.
+-dontwarn com.facebook.infer.annotation.**
+
+# Umeng analytics reads its configuration reflectively from the manifest
+# meta-data and reflects over its own model classes at runtime.
+-keep class com.umeng.** { *; }
+-dontwarn com.umeng.**
+
+# Glide loads its modules and generated API classes reflectively.
+-keep public class * implements com.bumptech.glide.module.GlideModule
+-keep class com.bumptech.glide.** { *; }
+-dontwarn com.bumptech.glide.**
